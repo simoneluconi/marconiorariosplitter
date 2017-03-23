@@ -35,14 +35,75 @@ namespace Marconi_Orario_Splitter
             if (fd.ShowDialog() == DialogResult.OK)
             {
                 Log("Selezionato file : " + System.IO.Path.GetFileName(fd.FileName));
-                string directoryOuput = System.IO.Path.GetDirectoryName(fd.FileName) + "/Converted";
-                Directory.CreateDirectory(directoryOuput);
-                Bitmap[] images = PdfToImage(fd.FileName);
-                Bitmap[] tuttiOrari = ConvertiPagine(images);
-                string[] NomiClassi = ListaOrari(fd.FileName);
-                SalvaOrari(directoryOuput, tuttiOrari, NomiClassi);
+                string directoryOuput = System.IO.Path.GetDirectoryName(fd.FileName) + "/Marconi_Orario_Splitter";
+                GestisciFile(directoryOuput, fd.FileName);
             }
         }
+
+        private void GestisciFile(string path, string filePath)
+        {
+            string fileName = System.IO.Path.GetFileName(filePath);
+            string typeContent = getTypeOfFileContents(filePath);
+
+            if (typeContent.Equals("ORARIO_CLASSI"))
+            {
+                string directoryOutput = path + "/Classi";
+                Directory.CreateDirectory(directoryOutput);
+                Bitmap[] images = PdfToImage(filePath);
+                Bitmap[] tuttiOrari = ConvertiPagine(images);
+                string[] NomiClassi = ListaClassi(filePath);
+                SalvaImmagini(directoryOutput, tuttiOrari, NomiClassi);
+            }
+            else if (typeContent.Equals("ORARIO_DOCENTE"))
+            {
+                string directoryOutput = path + "/Professori";
+                Directory.CreateDirectory(directoryOutput);
+                Bitmap[] images = PdfToImage(filePath);
+                Bitmap[] tuttiOrari = ConvertiPagine(images);
+                string[] NomiProf = ListaProfessori(filePath);
+                SalvaImmagini(directoryOutput, tuttiOrari, NomiProf);
+            }
+            else if (typeContent.Equals("ORARIO_LABORATORI"))
+            {
+                string directoryOutput = path + "/Laboratori";
+                Directory.CreateDirectory(directoryOutput);
+                Bitmap[] images = PdfToImage(filePath);
+                string[] NomiLab = ListaLaboratori(filePath);
+                SalvaImmagini(directoryOutput, images, NomiLab);
+            }
+            else
+            {
+                Log("ERRORE! IMPOSSIBILE DETERMINARE IL CONTENUTO DEL FILE");
+            }
+        }
+
+
+        private string getTypeOfFileContents(string path)
+        {
+            foreach (string text in LeggiPdf(path))
+            {
+                using (var reader = new StringReader(text))
+                {
+                    for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                    {
+                        if (line.ToLower().Contains("orario classe"))
+                        {
+                            return "ORARIO_CLASSI";
+                        } else if (line.ToLower().Contains("orario docente"))
+                        {
+                            return "ORARIO_DOCENTE";
+                        } else if (line.ToLower().Contains("occupazione aula"))
+                        {
+                            return "ORARIO_LABORATORI";
+                        }
+                    }
+                }
+
+            }
+
+            return null;
+        }
+        
 
         private Bitmap[] ConvertiPagine(Bitmap[] images)
         {
@@ -105,17 +166,13 @@ namespace Marconi_Orario_Splitter
         }
 
 
-        private string[] ListaOrari(string path)
+        private string[] ListaClassi(string path)
         {
             Log("Cerco nomi delle classi");
             List<string> orarioClassi = new List<string>();
-            var pdfReader = new PdfReader(path); //other filestream etc
 
-            for (int i = 1; i <= pdfReader.NumberOfPages; i++)
+            foreach (string text in LeggiPdf(path))
             {
-                string text = PdfTextExtractor.GetTextFromPage(pdfReader, i, new SimpleTextExtractionStrategy());
-
-
                 using (var reader = new StringReader(text))
                 {
                     for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
@@ -125,13 +182,12 @@ namespace Marconi_Orario_Splitter
                             int index = line.IndexOf("^");
                             string anno = line.Substring(index - 1, 1);
                             string sezione = line.Substring(index + 1, 1);
-                            string classe = anno + sezione;
+                            string classe = "Classe_" + anno + sezione;
                             Log("Trovata classe: " + classe);
                             orarioClassi.Add(classe);
                         }
                     }
                 }
-
 
             }
 
@@ -141,20 +197,97 @@ namespace Marconi_Orario_Splitter
 
         }
 
-        private void SalvaOrari(string path, Bitmap[] orari, string[] classi)
+
+        private string[] ListaProfessori(string path)
         {
-            Log("Inizio salvataggio classi");
-            for (int i = 0; i < classi.Length; i++)
+            Log("Cerco nomi dei professori");
+            List<string> orarioProf = new List<string>();
+
+            foreach (string text in LeggiPdf(path))
             {
-                string filename = path + "/Classe_" + classi[i] + ".jpg";
-                Log("Salvo classe: " + filename);
+                using (var reader = new StringReader(text))
+                {
+                    for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                    {
+                        if (line.ToLower().Contains("orario docente"))
+                        {
+                            int index = line.IndexOf("-");
+                            string nome = line.Substring(index +1, line.IndexOf("(") - index - 1).Trim();
+                            nome = nome.Replace("/", "-");
+                            nome = nome.Replace(".", "");
+                            Log("Trovata nome: " + nome);
+                            orarioProf.Add(nome);
+                        }
+                    }
+                }
+
+            }
+
+            Log("Finito di cercare i nomi dei professori");
+            Log(orarioProf.Count + " professori trovate");
+            return orarioProf.ToArray();
+
+        }
+
+        private string[] ListaLaboratori(string path)
+        {
+            Log("Cerco nomi dei laboratori");
+            List<string> orarioLaboratori = new List<string>();
+
+            foreach (string text in LeggiPdf(path))
+            {
+                using (var reader = new StringReader(text))
+                {
+                    for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+                    {
+                        if (line.ToLower().Contains("occupazione aula"))
+                        {
+                            int index = line.IndexOf("-");
+                            string nome = line.Substring(index + 1, line.IndexOf("(") - index - 1).Trim();
+                            nome = nome.Replace("/", "-");
+                            nome = nome.Replace(".", "");
+                            Log("Trovata aula: " + nome);
+                            orarioLaboratori.Add(nome);
+                        }
+                    }
+                }
+
+            }
+
+            Log("Finito di cercare i nomi dei laboratori");
+            Log(orarioLaboratori.Count + " laboratori trovate");
+            return orarioLaboratori.ToArray();
+
+        }
+
+        private string[] LeggiPdf(string path)
+        {
+            List<string> txtPages = new List<string>();
+            var pdfReader = new PdfReader(path); //other filestream etc
+
+            for (int i = 1; i <= pdfReader.NumberOfPages; i++)
+            {
+                string text = PdfTextExtractor.GetTextFromPage(pdfReader, i, new SimpleTextExtractionStrategy());
+                txtPages.Add(text);
+            }
+
+            return txtPages.ToArray();
+        }
+
+        private void SalvaImmagini(string path, Bitmap[] orari, string[] desc)
+        {
+            Log("Inizio salvataggio immagini");
+            for (int i = 0; i < desc.Length; i++)
+            {
+                string filename = path +"/" + desc[i] + ".jpg";
+                Log("Salvo immagine: " + filename);
                 orari[i].Save(filename, ImageFormat.Jpeg);
             }
 
             Log("Finito salvataggio classi");
 
-            if (orari.Length != classi.Length)
-                Log("ATTEZIONE: Orari: " + orari.Length + " - Classi: " + classi.Length);
+            if (orari.Length != desc.Length)
+                Log("ATTEZIONE: Orari: " + orari.Length + " - Desc: " + desc.Length);
 
             Log("Apro percorso: " + path);
             Process.Start(path);
