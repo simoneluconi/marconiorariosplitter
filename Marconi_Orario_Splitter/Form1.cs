@@ -47,7 +47,7 @@ namespace Marconi_Orario_Splitter
 
             if (typeContent.Equals("ORARIO_CLASSI"))
             {
-                string directoryOutput = path + "/Classi";
+                string directoryOutput = path + "/classi";
                 Directory.CreateDirectory(directoryOutput);
                 Bitmap[] images = PdfToImage(filePath);
                 Bitmap[] tuttiOrari = ConvertiPagine(images);
@@ -56,7 +56,7 @@ namespace Marconi_Orario_Splitter
             }
             else if (typeContent.Equals("ORARIO_DOCENTE"))
             {
-                string directoryOutput = path + "/Professori";
+                string directoryOutput = path + "/docenti";
                 Directory.CreateDirectory(directoryOutput);
                 Bitmap[] images = PdfToImage(filePath);
                 Bitmap[] tuttiOrari = ConvertiPagine(images);
@@ -65,7 +65,7 @@ namespace Marconi_Orario_Splitter
             }
             else if (typeContent.Equals("ORARIO_LABORATORI"))
             {
-                string directoryOutput = path + "/Laboratori";
+                string directoryOutput = path + "/laboratori";
                 Directory.CreateDirectory(directoryOutput);
                 Bitmap[] images = PdfToImage(filePath);
                 string[] NomiLab = ListaLaboratori(filePath);

@@ -10,3 +10,4 @@ d:\simone luconi\documenti\visual studio 2017\Projects\Marconi_Orario_Splitter\M
 d:\simone luconi\documenti\visual studio 2017\Projects\Marconi_Orario_Splitter\Marconi_Orario_Splitter\bin\Debug\itextsharp.dll
 d:\simone luconi\documenti\visual studio 2017\Projects\Marconi_Orario_Splitter\Marconi_Orario_Splitter\bin\Debug\itextsharp.xml
 d:\simone luconi\documenti\visual studio 2017\Projects\Marconi_Orario_Splitter\Marconi_Orario_Splitter\bin\Debug\SautinSoft.PdfFocus.dll
+D:\Simone Luconi\Documenti\Visual Studio 2017\Projects\Marconi_Orario_Splitter\Marconi_Orario_Splitter\obj\Debug\Marconi_Orario_Splitter.csproj.CoreCompileInputs.cache
