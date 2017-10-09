@@ -68,8 +68,9 @@ namespace Marconi_Orario_Splitter
                 string directoryOutput = path + "/laboratori";
                 Directory.CreateDirectory(directoryOutput);
                 Bitmap[] images = PdfToImage(filePath);
+                Bitmap[] tuttiOrari = ConvertiPagine(images);
                 string[] NomiLab = ListaLaboratori(filePath);
-                SalvaImmagini(directoryOutput, images, NomiLab);
+                SalvaImmagini(directoryOutput, tuttiOrari, NomiLab);
             }
             else
             {
